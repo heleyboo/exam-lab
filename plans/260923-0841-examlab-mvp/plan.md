@@ -55,7 +55,7 @@ Xây MVP nền tảng luyện đề và soạn đề **môn Toán THPT** theo fo
 | 1 | [Spike trích xuất đề](./phase-01-extraction-spike.md) | In Progress |
 | 2 | [Nền tảng và hạ tầng](./phase-02-foundation-infra.md) | Completed |
 | 3 | [Domain schema và taxonomy](./phase-03-domain-schema-taxonomy.md) | Completed |
-| 4 | [Design system và component](./phase-04-design-system.md) | Pending |
+| 4 | [Design system và component](./phase-04-design-system.md) | Completed |
 | 5 | [Pipeline import đề](./phase-05-import-pipeline.md) | Pending |
 | 6 | [Soát và duyệt đề](./phase-06-proofing-approval.md) | Pending |
 | 7 | [Lời giải AI và hàng chờ duyệt](./phase-07-ai-solutions-review.md) | Pending |

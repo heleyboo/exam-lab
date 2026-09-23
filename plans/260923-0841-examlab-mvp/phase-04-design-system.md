@@ -1,9 +1,10 @@
 ---
 phase: 4
-title: "Design system và component"
-status: pending
+title: Design system và component
+status: completed
 priority: P1
-dependencies: [2]
+dependencies:
+  - 2
 ---
 
 # Phase 4: Design system và component
