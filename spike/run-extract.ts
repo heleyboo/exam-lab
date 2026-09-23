@@ -21,6 +21,7 @@ Cờ:
   --kind digital|scan    ép loại nguồn khi tự nhận dạng sai
   --pages <a-b[,c-d]>    chỉ chạy các khoảng trang, ví dụ 1-4 hoặc 1-4,17
   --rotate <độ>          xoay ảnh trước khi gửi model (90, 180, 270) cho trang in nằm ngang
+  --exam-code <mã>       chỉ lấy dữ liệu của một mã đề, ví dụ 0101
 
 Ví dụ:
   pnpm spike:extract spike/fixtures/de-thi-thu-lhp-2025.pdf
@@ -35,6 +36,7 @@ interface Args {
   kind?: "digital" | "scan";
   ranges?: { first: number; last: number }[];
   rotate?: number;
+  examCode?: string;
   config: SpikeConfig;
 }
 
@@ -51,7 +53,7 @@ function parseArgs(argv: string[]): Args {
     flags.set(flag, value);
   }
 
-  const known = ["--out", "--dpi", "--preprocess", "--model", "--kind", "--pages", "--rotate"];
+  const known = ["--out", "--dpi", "--preprocess", "--model", "--kind", "--pages", "--rotate", "--exam-code"];
   for (const flag of flags.keys()) {
     if (!known.includes(flag)) throw new Error(`Cờ không hợp lệ: ${flag}\n${USAGE_TEXT}`);
   }
@@ -92,6 +94,7 @@ function parseArgs(argv: string[]): Args {
     ...(kind !== undefined ? { kind } : {}),
     ...(ranges !== undefined ? { ranges } : {}),
     ...(rotate !== undefined ? { rotate } : {}),
+    ...(flags.get("--exam-code") !== undefined ? { examCode: flags.get("--exam-code")! } : {}),
     config: loadConfig({
       model: flags.get("--model"),
       dpi: flags.get("--dpi"),
@@ -188,6 +191,7 @@ async function main(): Promise<void> {
           model: config.model,
           pageNumber: page.page,
           totalPages: rendered.length,
+          examCode: args.examCode,
         });
         usage = addUsage(usage, result.usage);
         pageResults.push({ page: page.page, extraction: result.extraction });

@@ -31,6 +31,8 @@ Nếu trang không ghi rõ tên phần, hãy suy ra loại câu từ hình thứ
    - Mỗi dòng phải ghi `part` là phần chứa câu đó: `"I"`, `"II"`, `"III"`, hoặc `"TL"` cho tự luận. Đề THPT 2025 **đánh số lại từ 1 ở mỗi phần**, nên thiếu `part` thì không biết "Câu 1" là câu nào.
    - Mỗi dòng phải ghi `examCode` của mã đề chứa câu đó. **Một trang đáp án thường liệt kê nhiều mã đề cạnh nhau**, mỗi mã một cột hoặc một bảng riêng; thiếu `examCode` thì đáp án của mã này sẽ bị gán nhầm cho mã khác.
    - Nếu bảng không ghi rõ phần, suy ra từ dạng đáp án: một chữ cái A–D là Phần I, chuỗi 4 ký tự Đ/S là Phần II, một đáp số là Phần III.
+   - **Bảng đáp án chính thức đánh số câu liên tục cả đề** (1 đến 22), khác với đề thi vốn đánh lại từ 1 ở mỗi phần. Ghi `number` đúng như bảng in, đừng tự quy đổi.
+   - **Không được bỏ sót các dòng Đúng/Sai.** Ô của Phần II chứa bốn ký tự Đ hoặc S, thường viết dạng `Đ,S,S,Đ` hoặc `ĐSSĐ`, và trông khác hẳn các ô còn lại. Trích đủ mọi dòng, kể cả những dòng này. Ghi `answer` là bốn ký tự liền nhau, ví dụ `ĐSSĐ`.
 9. **Lời giải**: chỉ điền `solution` khi đề in sẵn lời giải hoặc hướng dẫn chấm. Không tự viết lời giải.
 10. **Trang bìa, trang hướng dẫn, trang trắng**: đặt `isNonQuestionPage: true` và `questions` rỗng.
 11. Các trường mảng không có dữ liệu thì trả về mảng rỗng, các trường chuỗi không có dữ liệu thì trả về chuỗi rỗng. Không bỏ trường nào.

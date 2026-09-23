@@ -42,7 +42,7 @@ export function pagePromptVersion(): Promise<string> {
 /** Gửi ảnh một trang cho model và nhận dữ liệu đã validate theo schema. */
 export async function extractPage(
   imagePath: string,
-  opts: { model: string; pageNumber: number; totalPages: number },
+  opts: { model: string; pageNumber: number; totalPages: number; examCode?: string | undefined },
 ): Promise<PageResult> {
   const prompt = await loadPrompt("extract-page", PageExtraction);
   const imageData = await fs.readFile(imagePath);
@@ -68,7 +68,14 @@ export async function extractPage(
             },
             {
               type: "text" as const,
-              text: `Đây là trang ${opts.pageNumber}/${opts.totalPages} của đề. Trích xuất trang này.`,
+              text:
+                `Đây là trang ${opts.pageNumber}/${opts.totalPages} của đề. Trích xuất trang này.` +
+                // Bảng đáp án của kỳ thi thật liệt kê hàng chục mã đề; lấy hết
+                // vừa đắt gấp nhiều lần vừa dễ chạm trần token.
+                (opts.examCode
+                  ? `\n\nChỉ quan tâm mã đề ${opts.examCode}. Nếu trang là bảng đáp án nhiều mã đề, ` +
+                    `chỉ trích các dòng thuộc mã đề ${opts.examCode} và bỏ qua toàn bộ mã đề khác.`
+                  : ""),
             },
           ],
         },
