@@ -26,9 +26,12 @@ pnpm install
 cp .env.example .env          # điền BETTER_AUTH_SECRET
 pnpm infra:up                 # Postgres + MinIO bằng Docker
 pnpm db:migrate
+pnpm db:seed                  # cây phân loại Toán THPT + mẫu ma trận đề
 pnpm dev                      # http://localhost:3000
 pnpm dev:worker               # worker chạy process riêng
 ```
+
+Schema nghiệp vụ đã dựng xong: 32 bảng cho cây phân loại, ngân hàng câu hỏi, ma trận đề, bài làm, độ thành thạo, hạn mức AI. Seed sẵn 95 nút phân loại Toán 10–12 và mẫu ma trận "Cấu trúc THPT 2025" đúng 22 câu và 10,0 điểm.
 
 Chưa có màn hình nghiệp vụ nào — giao diện dựng ở giai đoạn sau theo prototype trong `design/`.
 

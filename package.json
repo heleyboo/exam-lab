@@ -22,7 +22,8 @@
     "spike:outline": "tsx spike/outline.ts",
     "spike:extract": "tsx spike/run-extract.ts",
     "spike:label": "tsx spike/score.ts label",
-    "spike:score": "tsx spike/score.ts score"
+    "spike:score": "tsx spike/score.ts score",
+    "db:seed": "tsx scripts/seed/index.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.127.0",

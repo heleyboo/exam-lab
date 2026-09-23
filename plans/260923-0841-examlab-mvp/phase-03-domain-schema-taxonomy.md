@@ -1,9 +1,10 @@
 ---
 phase: 3
-title: "Domain schema và taxonomy"
-status: pending
+title: Domain schema và taxonomy
+status: completed
 priority: P1
-dependencies: [2]
+dependencies:
+  - 2
 ---
 
 # Phase 3: Domain schema và taxonomy
