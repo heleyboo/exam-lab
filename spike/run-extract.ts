@@ -1,14 +1,14 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { loadConfig, type SpikeConfig } from "./lib/config.js";
-import { detectSourceKind, pageCount, renderPdfPages, rotateImage } from "./lib/render-pdf.js";
-import { detectOrientationVerified, DEFAULT_ORIENTATION_MODEL } from "./lib/detect-orientation.js";
-import { extractPage, pagePromptVersion, PageExtractionError } from "./lib/extract-page.js";
-import { extractDocx } from "./lib/extract-docx.js";
-import { cropFigure } from "./lib/crop-figures.js";
-import { mergePages } from "./lib/merge-pages.js";
-import { addUsage, costOf, formatVnd, priceOf, type Usage } from "./lib/cost.js";
-import { MergedQuestion, RunMeta, type PageExtraction, type SourceKind } from "./schema.js";
+import { loadConfig, type SpikeConfig } from "./lib/config";
+import { detectSourceKind, pageCount, renderPdfPages, rotateImage } from "../src/server/extraction/render-pdf";
+import { detectOrientationVerified, DEFAULT_ORIENTATION_MODEL } from "../src/server/extraction/detect-orientation";
+import { extractPage, pagePromptVersion, PageExtractionError } from "../src/server/ai/extract-page";
+import { extractDocx } from "../src/server/ai/extract-docx";
+import { cropFigure } from "../src/server/extraction/crop-figures";
+import { mergePages } from "../src/server/extraction/merge-pages";
+import { addUsage, costOf, formatVnd, priceOf, type Usage } from "../src/server/ai/cost";
+import { MergedQuestion, RunMeta, type PageExtraction, type SourceKind } from "../src/server/extraction/schema";
 
 const USAGE_TEXT = `
 Cách dùng:

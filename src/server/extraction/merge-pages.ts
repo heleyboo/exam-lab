@@ -1,4 +1,4 @@
-import type { ExtractedQuestion, MergedQuestion, PageExtraction, QuestionKind } from "../schema.js";
+import type { ExtractedQuestion, MergedQuestion, PageExtraction, QuestionKind } from "./schema";
 
 interface PageInput {
   page: number;

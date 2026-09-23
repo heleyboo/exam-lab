@@ -33,6 +33,8 @@ pnpm dev:worker               # worker chạy process riêng
 
 Schema nghiệp vụ đã dựng xong: 32 bảng cho cây phân loại, ngân hàng câu hỏi, ma trận đề, bài làm, độ thành thạo, hạn mức AI. Seed sẵn 95 nút phân loại Toán 10–12 và mẫu ma trận "Cấu trúc THPT 2025" đúng 22 câu và 10,0 điểm.
 
+Pipeline nạp đề đã chạy: upload file, hàng đợi xử lý nền, trích xuất từng trang, cắt hình, phát hiện câu trùng bằng vector, ghi chi phí AI theo từng job.
+
 Hệ thiết kế đã dựng: token màu sáng/tối lấy từ prototype, 12 component nghiệp vụ, và bộ render Markdown kèm LaTeX chạy phía server nên công thức hiện cả khi tắt JavaScript. Xem tại `/kitchen-sink`.
 
 Chưa có màn hình nghiệp vụ nào — các màn thật dựng ở giai đoạn sau theo prototype trong `design/`.

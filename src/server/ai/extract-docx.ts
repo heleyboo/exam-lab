@@ -1,11 +1,11 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
-import { PageExtraction } from "../schema.js";
-import { anthropic } from "./anthropic-client.js";
-import { loadPrompt } from "./prompt.js";
-import { run } from "./shell.js";
-import type { Usage } from "./cost.js";
+import { PageExtraction } from "../extraction/schema";
+import { anthropic } from "./anthropic-client";
+import { loadPrompt } from "./prompt";
+import { run } from "../extraction/shell";
+import type { Usage } from "./cost";
 
 export interface DocxResult {
   extraction: PageExtraction;

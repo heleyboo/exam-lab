@@ -19,7 +19,7 @@ export async function loadPrompt(
   const cached = cache.get(name);
   if (cached) return cached;
 
-  const text = await fs.readFile(path.join(here, "..", "prompts", `${name}.md`), "utf8");
+  const text = await fs.readFile(path.join(here, "prompts", `${name}.md`), "utf8");
   const schemaShape = JSON.stringify(z.toJSONSchema(schema));
   const version = createHash("sha256").update(text).update(schemaShape).digest("hex").slice(0, 12);
 

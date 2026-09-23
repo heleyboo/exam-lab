@@ -5,12 +5,22 @@ import { PgBoss } from "pg-boss";
  * Dùng cho job dài: trích xuất đề, sinh lời giải, chấm tự luận, xuất PDF.
  */
 export const QUEUES = {
-  /** Job mẫu để kiểm tra worker sống, sẽ bỏ khi có job thật ở Phase 5. */
+  /** Job mẫu để kiểm tra worker còn sống. */
   ping: "ping",
+  /** Nạp một đề từ file vào kho câu hỏi. */
+  importExam: "import-exam",
 } as const;
 
 export interface JobPayloads {
   ping: { sentAt: string; note: string };
+  importExam: {
+    jobId: string;
+    sourceExamId: string;
+    /** File đã lưu tạm trên đĩa của worker. */
+    filePath: string;
+    examCode?: string;
+    skipDedupe?: boolean;
+  };
 }
 
 let boss: PgBoss | null = null;
@@ -35,9 +45,15 @@ export async function getBoss(): Promise<PgBoss> {
 export async function sendJob<K extends keyof JobPayloads>(
   queue: K,
   data: JobPayloads[K],
-): Promise<string | null> {
+): Promise<string> {
   const instance = await getBoss();
-  return instance.send(queue, data);
+  // Phải tra sang TÊN hàng đợi. Gửi thẳng tên khoá thì pg-boss không tìm thấy
+  // hàng đợi và trả về null, job biến mất mà không có lỗi nào.
+  const jobId = await instance.send(QUEUES[queue], data);
+  if (!jobId) {
+    throw new Error(`Không xếp được job vào hàng đợi '${QUEUES[queue]}'`);
+  }
+  return jobId;
 }
 
 export async function stopBoss(): Promise<void> {

@@ -1,6 +1,8 @@
 import "dotenv/config";
 
-export type PreprocessMode = "auto" | "on" | "off";
+import type { PreprocessMode } from "../../src/server/extraction/render-pdf";
+
+export type { PreprocessMode };
 const PREPROCESS_MODES: PreprocessMode[] = ["auto", "on", "off"];
 
 export interface SpikeConfig {

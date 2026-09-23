@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
-import type { FigureRect } from "../schema.js";
+import type { FigureRect } from "./schema";
 
 /**
  * Cắt hình theo khung phần trăm mà model trả về.

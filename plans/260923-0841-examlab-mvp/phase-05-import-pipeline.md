@@ -1,9 +1,11 @@
 ---
 phase: 5
-title: "Pipeline import đề"
-status: pending
+title: Pipeline import đề
+status: completed
 priority: P1
-dependencies: [1, 3]
+dependencies:
+  - 1
+  - 3
 ---
 
 # Phase 5: Pipeline import đề

@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { formatVnd } from "./lib/cost.js";
-import { Label, LabelFile, MergedQuestion, RunMeta, type SourceKind } from "./schema.js";
+import { formatVnd } from "../src/server/ai/cost";
+import { Label, LabelFile, MergedQuestion, RunMeta, type SourceKind } from "../src/server/extraction/schema";
 
 /**
  * Chấm chất lượng trích xuất.

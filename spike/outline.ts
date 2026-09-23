@@ -1,6 +1,6 @@
 import path from "node:path";
-import { run } from "./lib/shell.js";
-import { pageCount } from "./lib/render-pdf.js";
+import { run } from "../src/server/extraction/shell";
+import { pageCount } from "../src/server/extraction/render-pdf";
 
 /**
  * Dò ranh giới đề trong một file tuyển tập nhiều đề.

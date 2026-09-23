@@ -2,10 +2,10 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { z } from "zod";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
-import { anthropic } from "./anthropic-client.js";
-import { run } from "./shell.js";
-import { rotateImage } from "./render-pdf.js";
-import type { Usage } from "./cost.js";
+import { anthropic } from "../ai/anthropic-client";
+import { run } from "./shell";
+import { rotateImage } from "./render-pdf";
+import type { Usage } from "../ai/cost";
 
 /**
  * Dò hướng trang.

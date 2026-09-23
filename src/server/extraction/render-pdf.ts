@@ -1,7 +1,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { run } from "./shell.js";
-import type { PreprocessMode } from "./config.js";
+import { run } from "./shell";
+/** Tiền xử lý ảnh: auto chỉ chạy khi phát hiện bản scan. */
+export type PreprocessMode = "auto" | "on" | "off";
 
 export interface RenderedPage {
   /** Số trang thật, đọc từ tên file pdftoppm sinh ra, không phải vị trí trong thư mục. */

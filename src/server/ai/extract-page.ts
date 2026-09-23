@@ -1,9 +1,9 @@
 import fs from "node:fs/promises";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
-import { PageExtraction } from "../schema.js";
-import { anthropic } from "./anthropic-client.js";
-import { loadPrompt } from "./prompt.js";
-import { addUsage, type Usage } from "./cost.js";
+import { PageExtraction } from "../extraction/schema";
+import { anthropic } from "./anthropic-client";
+import { loadPrompt } from "./prompt";
+import { addUsage, type Usage } from "./cost";
 
 /** Trần token cho một trang thường. */
 const MAX_TOKENS = 16000;
