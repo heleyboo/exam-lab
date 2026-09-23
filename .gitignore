@@ -104,3 +104,6 @@ worktrees/
 # env
 .env
 .env.local
+
+# file kê khai của bộ ClaudeKit, không liên quan dự án
+release-manifest.json
