@@ -23,6 +23,8 @@ import {
   questionOriginEnum,
   solutionOriginEnum,
   solutionRejectReasonEnum,
+  reviewEditKindEnum,
+  reviewOutcomeEnum,
   taxonomyLevelEnum,
   visibilityEnum,
 } from "./enums";
@@ -259,4 +261,30 @@ export const questionSolution = pgTable(
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (table) => [index("question_solution_status_idx").on(table.status, table.matchesSourceKey)],
+);
+
+/**
+ * Nhật ký soát từng câu.
+ *
+ * Vừa là dấu vết ai duyệt cái gì, vừa là nguồn số liệu đo chất lượng trích
+ * xuất: tỉ lệ câu duyệt thẳng chính là tỉ lệ máy làm đúng, và `edits` cho biết
+ * máy sai ở khâu nào.
+ */
+export const questionReview = pgTable(
+  "question_review",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    questionId: uuid("question_id")
+      .notNull()
+      .references(() => question.id, { onDelete: "cascade" }),
+    reviewerId: text("reviewer_id").references(() => user.id, { onDelete: "set null" }),
+    outcome: reviewOutcomeEnum("outcome").notNull(),
+    /** Các khâu phải sửa tay. Rỗng khi duyệt thẳng. */
+    edits: reviewEditKindEnum("edits").array().notNull().default(sql`'{}'::review_edit_kind[]`),
+    note: text("note"),
+    /** Thời gian soát câu này, để đo tốc độ soát thực tế. */
+    durationMs: integer("duration_ms"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [index("question_review_question_idx").on(table.questionId)],
 );

@@ -88,3 +88,24 @@ export const reportReasonEnum = pgEnum("report_reason", [
   "duplicate",
   "other",
 ]);
+
+/**
+ * Kết quả soát một câu. Dùng để đo chất lượng trích xuất: câu duyệt thẳng nghĩa
+ * là máy làm đúng, câu phải sửa nghĩa là máy làm sai chỗ nào đó.
+ */
+export const reviewOutcomeEnum = pgEnum("review_outcome", [
+  "approved_clean",
+  "approved_edited",
+  "rejected",
+]);
+
+/** Phần nào của câu phải sửa tay. Đây chính là các chỉ số chất lượng của Phase 1. */
+export const reviewEditKindEnum = pgEnum("review_edit_kind", [
+  "boundary",
+  "latex",
+  "options",
+  "answer",
+  "figure",
+  "taxonomy",
+  "other",
+]);

@@ -57,7 +57,7 @@ Xây MVP nền tảng luyện đề và soạn đề **môn Toán THPT** theo fo
 | 3 | [Domain schema và taxonomy](./phase-03-domain-schema-taxonomy.md) | Completed |
 | 4 | [Design system và component](./phase-04-design-system.md) | Completed |
 | 5 | [Pipeline import đề](./phase-05-import-pipeline.md) | Completed |
-| 6 | [Soát và duyệt đề](./phase-06-proofing-approval.md) | Pending |
+| 6 | [Soát và duyệt đề](./phase-06-proofing-approval.md) | In Progress |
 | 7 | [Lời giải AI và hàng chờ duyệt](./phase-07-ai-solutions-review.md) | Pending |
 | 8 | [Luyện tập học sinh](./phase-08-student-practice.md) | Pending |
 | 9 | [Tự luận và AI chấm](./phase-09-essay-ai-grading.md) | Pending |

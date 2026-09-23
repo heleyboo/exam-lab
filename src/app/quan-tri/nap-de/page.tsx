@@ -41,6 +41,7 @@ export default async function NapDe() {
       error: importJob.error,
       warnings: importJob.warnings,
       createdAt: importJob.createdAt,
+      examId: sourceExam.id,
       examName: sourceExam.examName,
       shortCode: sourceExam.shortCode,
       school: sourceExam.school,
@@ -97,6 +98,12 @@ export default async function NapDe() {
                       <Badge tone={JOB_STATE_TONE[job.state].tone}>
                         {JOB_STATE_TONE[job.state].label}
                       </Badge>
+                      <a
+                        href={`/quan-tri/soat-de/${job.examId}`}
+                        className="ml-auto rounded-lg border border-[var(--color-line)] px-3 py-1.5 text-sm"
+                      >
+                        Soát đề →
+                      </a>
                     </div>
 
                     <JobStepper steps={stepStates(job.step, job.state)} />

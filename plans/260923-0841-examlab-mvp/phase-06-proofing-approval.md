@@ -1,9 +1,11 @@
 ---
 phase: 6
-title: "Soát và duyệt đề"
-status: pending
+title: Soát và duyệt đề
+status: in-progress
 priority: P1
-dependencies: [4, 5]
+dependencies:
+  - 4
+  - 5
 ---
 
 # Phase 6: Soát và duyệt đề
@@ -43,6 +45,11 @@ Màn nặng nhất của admin: xem PDF gốc kèm khung bounding box bên trái
 - [ ] Câu thiếu đáp án hoặc thiếu lời giải đã duyệt **không** chuyển được sang `published` (chặn ở service, có test)
 - [ ] Refresh giữa chừng không mất nội dung đang sửa
 - [ ] Đánh dấu trùng ghi `duplicateOfId` và ẩn câu trùng khỏi kho công khai
+
+### Trạng thái
+- **Xong**: màn soát chia đôi (ảnh trang kèm khung ↔ danh sách câu), sửa đề bài và đáp án, xử lý trùng, ghi nhật ký soát, chốt chặn xuất bản, báo cáo chất lượng sinh từ nhật ký soát.
+- **Chưa làm**: màn quản lý cây phân loại, gộp và tách câu, duyệt hàng loạt, lưu nháp tự động, và **AI đề xuất dạng bài kèm độ tin cậy** (thiếu từ Phase 5, câu nhập vào hiện chưa được gắn phân loại).
+- Kéo chỉnh khung và gộp/tách vốn đã được kế hoạch cho phép cắt nếu trễ; ba mục còn lại thì chưa.
 
 ## Risk Assessment
 - **Màn quá phức tạp, dễ trễ** → làm theo thứ tự: viewer + sửa + duyệt trước; kéo chỉnh khung và gộp/tách sau; cắt được nếu trễ.
