@@ -35,7 +35,27 @@ pnpm spike:extract spike/fixtures/de-day.pdf --pages 1-4
 
 # Ép loại nguồn khi tự nhận dạng sai
 pnpm spike:extract spike/fixtures/de-co-ocr.pdf --kind scan
+
+# Đề kèm trang đáp án ở cuối file, chỉ lấy một mã đề
+pnpm spike:extract spike/fixtures/de-thpt.pdf --pages 1-4,17 --exam-code 0101
 ```
+
+### Hướng trang
+
+Mặc định công cụ **tự dò hướng từng trang** bằng model nhỏ (Haiku) rồi xoay trước khi trích xuất. Tốn khoảng 70đ/trang, bằng 3% tiền trích xuất.
+
+Không tắt tính năng này trừ khi có lý do rõ ràng. Đo trên đề tốt nghiệp THPT 2025: khi ảnh bị xoay sai chiều, model **vẫn đọc được và không báo lỗi gì**, nhưng trả về 3 đáp án sai trên 16 ô kiểm được, tốn gấp 13 lần tiền và lâu gấp 20 lần. Đáp án sai là kiểu lỗi tệ nhất vì không ai phát hiện ra.
+
+```bash
+pnpm spike:extract file.pdf --rotate off    # tắt dò hướng
+pnpm spike:extract file.pdf --rotate 90     # ép góc xoay
+```
+
+Cách dò: hỏi model góc xoay, xoay theo, rồi **hỏi lại trên ảnh đã xoay**. Model hay nhầm 90 với 270 vì hai chiều nằm ngang trông na ná nhau, nhưng xoay nhầm chiều sẽ thành lộn ngược — mà lộn ngược thì model nhận rất chắc nhờ vị trí dấu tiếng Việt. Đo trên 6 ca gồm cả 4 góc: 6/6 đúng.
+
+### Trang đáp án nhiều mã đề
+
+Bảng đáp án của kỳ thi thật là lưới hàng chục mã đề nhân 22 câu, in nằm ngang. Lấy cả bảng tốn 30.706đ cho một trang và chạm trần token. Dùng `--exam-code` để chỉ lấy một mã: còn 2.114đ và 21 giây.
 
 ### File tuyển tập nhiều đề
 

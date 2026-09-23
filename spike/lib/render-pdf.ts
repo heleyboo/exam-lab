@@ -56,10 +56,9 @@ export async function pageCount(pdfPath: string): Promise<number> {
  * Làm sạch ảnh scan trước khi gửi model: xám hoá, nắn nghiêng, cân bằng sáng, khử đốm.
  * `-deskew` nắn được ảnh scan lệch vài độ, lỗi phổ biến nhất của đề trường.
  */
-async function preprocessImage(input: string, output: string, rotate: number): Promise<void> {
+async function preprocessImage(input: string, output: string): Promise<void> {
   await run("magick", [
     input,
-    ...(rotate !== 0 ? ["-rotate", String(rotate)] : []),
     "-colorspace", "Gray",
     "-deskew", "40%",
     "+repage",
@@ -79,12 +78,17 @@ export interface RenderOptions {
    * Nhiều khoảng để lấy được đề kèm trang đáp án ở cuối file mà không phải render cả tập.
    */
   ranges?: { first: number; last: number }[];
-  /**
-   * Xoay ảnh trước khi gửi model, theo độ.
-   * Trang bảng đáp án của đề thi thật hay in nằm ngang; model đọc chữ xoay 90°
-   * kém hơn hẳn so với đọc chữ dựng đứng.
-   */
-  rotate?: number;
+}
+
+/**
+ * Xoay ảnh theo chiều kim đồng hồ.
+ * Tách khỏi bước render vì góc xoay chỉ biết được sau khi dò hướng trang.
+ */
+export async function rotateImage(input: string, output: string, degrees: number): Promise<string> {
+  if (degrees === 0) return input;
+  await fs.mkdir(path.dirname(output), { recursive: true });
+  await run("magick", [input, "-rotate", String(degrees), "+repage", output]);
+  return output;
 }
 
 /** Render từng trang PDF thành PNG, tiền xử lý khi cần. */
@@ -121,10 +125,7 @@ export async function renderPdfPages(
   const rendered = (await fs.readdir(rawDir)).filter((f) => f.endsWith(".png"));
   if (rendered.length === 0) throw new Error(`pdftoppm không tạo ra trang nào từ ${pdfPath}`);
 
-  const rotate = opts.rotate ?? 0;
-  // Có góc xoay thì bắt buộc phải qua bước xử lý ảnh, kể cả khi là PDF số.
-  const shouldPreprocess =
-    rotate !== 0 || opts.preprocess === "on" || (opts.preprocess === "auto" && opts.scanned);
+  const shouldPreprocess = opts.preprocess === "on" || (opts.preprocess === "auto" && opts.scanned);
 
   const pages: RenderedPage[] = [];
   for (const file of rendered) {
@@ -138,7 +139,7 @@ export async function renderPdfPages(
     let imagePath = rawImagePath;
     if (shouldPreprocess) {
       imagePath = path.join(readyDir, file);
-      await preprocessImage(rawImagePath, imagePath, rotate);
+      await preprocessImage(rawImagePath, imagePath);
     }
 
     pages.push({ page, imagePath, preprocessed: shouldPreprocess });

@@ -120,6 +120,14 @@ export const RunMeta = z.object({
     usdToVnd: z.number(),
   }),
   promptVersion: z.string(),
+  /** Dò hướng trang: chạy bằng model nhỏ riêng nên token và chi phí tính tách. */
+  orientation: z.object({
+    mode: z.enum(["auto", "fixed", "off"]),
+    model: z.string().nullable(),
+    perPage: z.array(z.object({ page: z.number(), rotate: z.number(), reason: z.string() })),
+    usage: z.object({ inputTokens: z.number(), outputTokens: z.number() }),
+    cost: z.object({ usd: z.number(), vnd: z.number() }),
+  }),
   usage: z.object({ inputTokens: z.number(), outputTokens: z.number() }),
   cost: z.object({ usd: z.number(), vnd: z.number() }),
   costPerPageVnd: z.number().nullable(),

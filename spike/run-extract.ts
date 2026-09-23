@@ -1,7 +1,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { loadConfig, type SpikeConfig } from "./lib/config.js";
-import { detectSourceKind, pageCount, renderPdfPages } from "./lib/render-pdf.js";
+import { detectSourceKind, pageCount, renderPdfPages, rotateImage } from "./lib/render-pdf.js";
+import { detectOrientationVerified, DEFAULT_ORIENTATION_MODEL } from "./lib/detect-orientation.js";
 import { extractPage, pagePromptVersion, PageExtractionError } from "./lib/extract-page.js";
 import { extractDocx } from "./lib/extract-docx.js";
 import { cropFigure } from "./lib/crop-figures.js";
@@ -20,7 +21,7 @@ Cờ:
   --model <id>           model trích xuất (mặc định claude-opus-5)
   --kind digital|scan    ép loại nguồn khi tự nhận dạng sai
   --pages <a-b[,c-d]>    chỉ chạy các khoảng trang, ví dụ 1-4 hoặc 1-4,17
-  --rotate <độ>          xoay ảnh trước khi gửi model (90, 180, 270) cho trang in nằm ngang
+  --rotate auto|off|<độ>  hướng trang: auto (mặc định, dò bằng model nhỏ), off, hoặc ép 90/180/270
   --exam-code <mã>       chỉ lấy dữ liệu của một mã đề, ví dụ 0101
 
 Ví dụ:
@@ -35,7 +36,8 @@ interface Args {
   out?: string;
   kind?: "digital" | "scan";
   ranges?: { first: number; last: number }[];
-  rotate?: number;
+  /** undefined = auto (mặc định), "off" = không xoay, số = ép góc. */
+  rotate?: number | "off";
   examCode?: string;
   config: SpikeConfig;
 }
@@ -64,11 +66,15 @@ function parseArgs(argv: string[]): Args {
   }
 
   const rotateRaw = flags.get("--rotate");
-  let rotate: number | undefined;
-  if (rotateRaw !== undefined) {
-    rotate = Number.parseInt(rotateRaw, 10);
-    if (![90, 180, 270].includes(rotate)) {
-      throw new Error(`--rotate phải là 90, 180 hoặc 270, đang là '${rotateRaw}'`);
+  let rotate: number | "off" | undefined;
+  if (rotateRaw !== undefined && rotateRaw !== "auto") {
+    if (rotateRaw === "off") {
+      rotate = "off";
+    } else {
+      rotate = Number.parseInt(rotateRaw, 10);
+      if (![0, 90, 180, 270].includes(rotate)) {
+        throw new Error(`--rotate phải là auto, off, 0, 90, 180 hoặc 270, đang là '${rotateRaw}'`);
+      }
     }
   }
 
@@ -145,6 +151,11 @@ async function main(): Promise<void> {
   let pages: number | null = null;
   const failedPages: { page: number; error: string }[] = [];
   const warnings: string[] = [];
+  const orientationMode: "auto" | "fixed" | "off" =
+    args.rotate === undefined ? "auto" : args.rotate === "off" ? "off" : "fixed";
+  const orientationModel = process.env.SPIKE_ORIENTATION_MODEL ?? DEFAULT_ORIENTATION_MODEL;
+  const orientationPerPage: { page: number; rotate: number; reason: string }[] = [];
+  let orientationUsage: Usage = { inputTokens: 0, outputTokens: 0 };
 
   if (extension === ".pdf") {
     const detection = await detectSourceKind(inputPath, args.kind);
@@ -165,7 +176,6 @@ async function main(): Promise<void> {
       preprocess: config.preprocess,
       scanned: detection.scanned,
       ...(args.ranges ? { ranges: args.ranges } : {}),
-      ...(args.rotate !== undefined ? { rotate: args.rotate } : {}),
     });
     pages = rendered.length;
 
@@ -186,8 +196,33 @@ async function main(): Promise<void> {
 
     // Chạy tuần tự, một trang lỗi không được làm mất công của các trang đã trả tiền.
     for (const page of rendered) {
+      // Dò hướng trước khi gửi trang cho model trích xuất: đoán sai hướng không
+      // gây lỗi nào mà chỉ lặng lẽ trả về dữ liệu sai, nên không thể để người
+      // dùng tự đoán.
+      let imagePath = page.imagePath;
+      let degrees = 0;
+      if (orientationMode === "fixed") {
+        degrees = args.rotate as number;
+      } else if (orientationMode === "auto") {
+        const detected = await detectOrientationVerified(page.imagePath, {
+          model: orientationModel,
+          scratchDir: path.join(outDir, "thumbs"),
+        });
+        degrees = detected.rotate;
+        orientationUsage = addUsage(orientationUsage, detected.usage);
+        orientationPerPage.push({ page: page.page, rotate: degrees, reason: detected.reason });
+      }
+      if (degrees !== 0) {
+        imagePath = await rotateImage(
+          page.imagePath,
+          path.join(outDir, "pages-rotated", path.basename(page.imagePath)),
+          degrees,
+        );
+        page.imagePath = imagePath;
+      }
+
       try {
-        const result = await extractPage(page.imagePath, {
+        const result = await extractPage(imagePath, {
           model: config.model,
           pageNumber: page.page,
           totalPages: rendered.length,
@@ -255,7 +290,16 @@ async function main(): Promise<void> {
     throw new Error(`Chỉ hỗ trợ .pdf và .docx, không hỗ trợ '${extension}'`);
   }
 
-  const cost = costOf(config.model, usage, config.usdToVnd);
+  const extractionCost = costOf(config.model, usage, config.usdToVnd);
+  const orientationCost =
+    orientationMode === "auto"
+      ? costOf(orientationModel, orientationUsage, config.usdToVnd)
+      : { usd: 0, vnd: 0 };
+  // Cộng cả hai model vào một con số: đó mới là số tiền thật phải trả cho trang đó.
+  const cost = {
+    usd: extractionCost.usd + orientationCost.usd,
+    vnd: extractionCost.vnd + orientationCost.vnd,
+  };
   const meta = RunMeta.parse({
     source: path.relative(process.cwd(), inputPath),
     sourceKind,
@@ -270,6 +314,13 @@ async function main(): Promise<void> {
     warnings,
     config,
     promptVersion,
+    orientation: {
+      mode: orientationMode,
+      model: orientationMode === "auto" ? orientationModel : null,
+      perPage: orientationPerPage,
+      usage: orientationUsage,
+      cost: orientationCost,
+    },
     usage,
     cost,
     // docx không có khái niệm trang nên chi phí mỗi trang không đo được, để null
@@ -297,8 +348,16 @@ async function main(): Promise<void> {
     for (const warning of warnings.slice(0, 5)) console.log(`  - ${warning}`);
     if (warnings.length > 5) console.log(`  ... còn ${warnings.length - 5} cảnh báo`);
   }
+  const rotatedPages = orientationPerPage.filter((p) => p.rotate !== 0);
+  if (rotatedPages.length > 0) {
+    console.log(
+      `Đã xoay ${rotatedPages.length} trang: ` +
+        rotatedPages.map((p) => `trang ${p.page} → ${p.rotate}°`).join(", "),
+    );
+  }
   console.log(
     `Chi phí: ${formatVnd(cost.vnd)}` +
+      (orientationCost.vnd > 0 ? ` (dò hướng ${formatVnd(orientationCost.vnd)})` : "") +
       (meta.costPerPageVnd !== null ? ` (${formatVnd(meta.costPerPageVnd)}/trang)` : "") +
       ` · ${((Date.now() - startedAt) / 1000).toFixed(0)}s · model ${config.model}`,
   );
