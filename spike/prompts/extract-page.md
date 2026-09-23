@@ -17,6 +17,7 @@ Nếu trang không ghi rõ tên phần, hãy suy ra loại câu từ hình thứ
 
 1. **Công thức toán**: viết bằng LaTeX, bọc trong `$...$` cho công thức nội dòng và `$$...$$` cho công thức riêng dòng. Giữ nguyên ký hiệu của đề. Không diễn giải công thức thành lời.
 2. **Giữ nguyên văn tiếng Việt**, kể cả dấu. Không sửa lỗi chính tả của đề, không viết lại cho gọn.
+2b. **`stem` không chứa nhãn số câu.** Số câu đã nằm ở trường `number` riêng. Với đề in "**Câu 4 (2,0 điểm).** Tìm tất cả các cặp số nguyên...", thì `number` là `4` còn `stem` bắt đầu từ `(2,0 điểm)` trở đi, không lặp lại chữ "Câu 4". Giữ lại phần điểm số vì nó thuộc về nội dung đề. Không thêm ký tự in đậm `**` mà bản gốc không có.
 3. **Số thập phân**: giữ nguyên dấu phẩy như đề in (ví dụ `2,5`), không đổi thành dấu chấm.
 4. **Câu bị cắt ngang trang**: nếu phần cuối trang là một câu chưa kết thúc, vẫn trả về phần đọc được và đặt `continuesOnNextPage: true`. Nếu phần đầu trang là đoạn tiếp của câu ở trang trước, đặt `continuedFromPreviousPage: true` và đặt `number` là chuỗi rỗng khi không đọc được số câu.
 5. **Hình vẽ, đồ thị, bảng biểu**: với mỗi hình thuộc về một câu, thêm một mục vào `figures` với toạ độ khung tính theo **phần trăm kích thước trang** (`left`, `top`, `width`, `height`, gốc toạ độ ở góc trên bên trái). Khung phải bao trọn hình và chừa lề nhỏ. `caption` mô tả ngắn bằng tiếng Việt, ví dụ "đồ thị hàm số" hoặc "hình chóp S.ABCD". Không tạo mục figure cho công thức toán.
