@@ -37,6 +37,23 @@ pnpm spike:extract spike/fixtures/de-day.pdf --pages 1-4
 pnpm spike:extract spike/fixtures/de-co-ocr.pdf --kind scan
 ```
 
+### File tuyển tập nhiều đề
+
+**Không chạy cả file một lượt.** Công cụ giả định một lần chạy là một đề; gộp nhiều đề sẽ làm câu cuối đề này dính vào câu đầu đề sau, và đáp án "Phần I Câu 1" của đề sau ghi đè lên đề trước.
+
+```bash
+# Dò ranh giới đề rồi in sẵn lệnh cho từng đề
+pnpm spike:outline spike/fixtures/tuyen-tap.pdf
+```
+
+Lệnh này đọc text của từng trang, tìm mốc "ĐỀ SỐ", "HƯỚNG DẪN GIẢI", bỏ qua trang mục lục, và không đếm các mốc "Đề số N" nằm trong phần lời giải. Chỉ chạy được với PDF có text layer; bản scan phải mở xem bằng mắt rồi tự điền `--pages`.
+
+Luôn kiểm lại vài khoảng trang trước khi chạy hàng loạt — dò bằng chữ không phải lúc nào cũng đúng.
+
+Sách thường để **lời giải ở phần riêng phía sau**, không nằm ngay sau mỗi đề. Công cụ chỉ ghép được đáp án trong cùng một lần chạy, nên phần đề và phần lời giải phải chạy riêng rồi ghép thủ công khi đọc kết quả.
+
+Khi chấm, **tính tuyển tập thành một nhóm riêng**, đừng gộp với đề trường/sở: sách in sạch và đều hơn nhiều, gộp chung sẽ cho ra con số lạc quan hơn thực tế.
+
 Thư mục kết quả mặc định là `spike/out/<tên-đề>-<model>-<dpi>-<preprocess>`, nên chạy 200 DPI rồi 300 DPI sẽ ra hai thư mục khác nhau thay vì đè lên nhau.
 
 | File | Nội dung |

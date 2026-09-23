@@ -95,10 +95,13 @@ async function main(): Promise<void> {
   const baseName = path.basename(inputPath).replace(/\.[^.]+$/, "");
   // Tên thư mục kèm biến thể: chạy 200 DPI rồi 300 DPI phải ra hai thư mục khác nhau,
   // nếu không lần sau sẽ đè lên lần trước và số đo của hai lần lẫn vào nhau.
+  // Kèm cả khoảng trang: một file tuyển tập chạy nhiều lần cho nhiều đề khác nhau,
+  // thiếu phần này thì đề sau đè lên đề trước.
+  const rangeSuffix = args.range ? `-p${args.range.first}-${args.range.last}` : "";
   const defaultOut = path.join(
     "spike",
     "out",
-    `${baseName}-${config.model}-${config.dpi}-${config.preprocess}`,
+    `${baseName}${rangeSuffix}-${config.model}-${config.dpi}-${config.preprocess}`,
   );
   const outDir = path.resolve(args.out ?? defaultOut);
 
