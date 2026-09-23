@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { loadConfig, type SpikeConfig } from "./lib/config.js";
 import { detectSourceKind, pageCount, renderPdfPages } from "./lib/render-pdf.js";
-import { extractPage, pagePromptVersion } from "./lib/extract-page.js";
+import { extractPage, pagePromptVersion, PageExtractionError } from "./lib/extract-page.js";
 import { extractDocx } from "./lib/extract-docx.js";
 import { cropFigure } from "./lib/crop-figures.js";
 import { mergePages } from "./lib/merge-pages.js";
@@ -19,19 +19,22 @@ Cờ:
   --preprocess auto|on|off   tiền xử lý ảnh scan (mặc định auto)
   --model <id>           model trích xuất (mặc định claude-opus-5)
   --kind digital|scan    ép loại nguồn khi tự nhận dạng sai
-  --pages <a-b>          chỉ chạy khoảng trang, ví dụ 1-5
+  --pages <a-b[,c-d]>    chỉ chạy các khoảng trang, ví dụ 1-4 hoặc 1-4,17
+  --rotate <độ>          xoay ảnh trước khi gửi model (90, 180, 270) cho trang in nằm ngang
 
 Ví dụ:
   pnpm spike:extract spike/fixtures/de-thi-thu-lhp-2025.pdf
   pnpm spike:extract spike/fixtures/de-scan.pdf --dpi 300 --preprocess on
   pnpm spike:extract spike/fixtures/de-day.pdf --pages 1-4
+  pnpm spike:extract spike/fixtures/de-thi.pdf --pages 1-4,17   # đề kèm trang đáp án
 `;
 
 interface Args {
   file: string;
   out?: string;
   kind?: "digital" | "scan";
-  range?: { first: number; last: number };
+  ranges?: { first: number; last: number }[];
+  rotate?: number;
   config: SpikeConfig;
 }
 
@@ -48,7 +51,7 @@ function parseArgs(argv: string[]): Args {
     flags.set(flag, value);
   }
 
-  const known = ["--out", "--dpi", "--preprocess", "--model", "--kind", "--pages"];
+  const known = ["--out", "--dpi", "--preprocess", "--model", "--kind", "--pages", "--rotate"];
   for (const flag of flags.keys()) {
     if (!known.includes(flag)) throw new Error(`Cờ không hợp lệ: ${flag}\n${USAGE_TEXT}`);
   }
@@ -58,20 +61,37 @@ function parseArgs(argv: string[]): Args {
     throw new Error(`--kind phải là digital hoặc scan, đang là '${kind}'`);
   }
 
-  let range: Args["range"];
+  const rotateRaw = flags.get("--rotate");
+  let rotate: number | undefined;
+  if (rotateRaw !== undefined) {
+    rotate = Number.parseInt(rotateRaw, 10);
+    if (![90, 180, 270].includes(rotate)) {
+      throw new Error(`--rotate phải là 90, 180 hoặc 270, đang là '${rotateRaw}'`);
+    }
+  }
+
+  let ranges: Args["ranges"];
   const pages = flags.get("--pages");
   if (pages !== undefined) {
-    const match = pages.match(/^(\d+)-(\d+)$/);
-    if (!match?.[1] || !match[2]) throw new Error(`--pages phải có dạng a-b, đang là '${pages}'`);
-    range = { first: Number.parseInt(match[1], 10), last: Number.parseInt(match[2], 10) };
-    if (range.first < 1 || range.last < range.first) throw new Error(`--pages '${pages}' không hợp lệ`);
+    ranges = pages.split(",").map((part) => {
+      const match = part.trim().match(/^(\d+)-(\d+)$/);
+      if (!match?.[1] || !match[2]) {
+        throw new Error(`--pages phải có dạng a-b hoặc a-b,c-d, đang là '${pages}'`);
+      }
+      const range = { first: Number.parseInt(match[1], 10), last: Number.parseInt(match[2], 10) };
+      if (range.first < 1 || range.last < range.first) {
+        throw new Error(`--pages '${part.trim()}' không hợp lệ`);
+      }
+      return range;
+    });
   }
 
   return {
     file,
     ...(flags.get("--out") !== undefined ? { out: flags.get("--out")! } : {}),
     ...(kind !== undefined ? { kind } : {}),
-    ...(range !== undefined ? { range } : {}),
+    ...(ranges !== undefined ? { ranges } : {}),
+    ...(rotate !== undefined ? { rotate } : {}),
     config: loadConfig({
       model: flags.get("--model"),
       dpi: flags.get("--dpi"),
@@ -97,7 +117,9 @@ async function main(): Promise<void> {
   // nếu không lần sau sẽ đè lên lần trước và số đo của hai lần lẫn vào nhau.
   // Kèm cả khoảng trang: một file tuyển tập chạy nhiều lần cho nhiều đề khác nhau,
   // thiếu phần này thì đề sau đè lên đề trước.
-  const rangeSuffix = args.range ? `-p${args.range.first}-${args.range.last}` : "";
+  const rangeSuffix = args.ranges
+    ? `-p${args.ranges.map((r) => `${r.first}-${r.last}`).join("_")}`
+    : "";
   const defaultOut = path.join(
     "spike",
     "out",
@@ -139,12 +161,13 @@ async function main(): Promise<void> {
       dpi: config.dpi,
       preprocess: config.preprocess,
       scanned: detection.scanned,
-      ...(args.range ? { range: args.range } : {}),
+      ...(args.ranges ? { ranges: args.ranges } : {}),
+      ...(args.rotate !== undefined ? { rotate: args.rotate } : {}),
     });
     pages = rendered.length;
 
-    const expected = args.range
-      ? Math.min(args.range.last, total) - args.range.first + 1
+    const expected = args.ranges
+      ? args.ranges.reduce((sum, r) => sum + Math.min(r.last, total) - r.first + 1, 0)
       : total;
     if (rendered.length !== expected) {
       throw new Error(
@@ -175,10 +198,15 @@ async function main(): Promise<void> {
         );
         console.log(
           `  trang ${page.page}/${rendered.length}: ${result.extraction.questions.length} câu · ` +
-            `${(result.durationMs / 1000).toFixed(1)}s`,
+            `${(result.durationMs / 1000).toFixed(1)}s${result.retried ? " (phải thử lại)" : ""}`,
         );
+        if (result.retried) {
+          warnings.push(`Trang ${page.page}: chạm trần token ở lần gọi đầu, đã thử lại`);
+        }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
+        // Lần gọi hỏng vẫn bị tính tiền: cộng vào usage để báo cáo chi phí đúng thực tế.
+        if (error instanceof PageExtractionError) usage = addUsage(usage, error.usage);
         failedPages.push({ page: page.page, error: message });
         console.warn(`  trang ${page.page}/${rendered.length}: LỖI - ${message}`);
       }
@@ -230,6 +258,7 @@ async function main(): Promise<void> {
     sourceKindEvidence,
     pages,
     questionCount: questions.length,
+    examCodes: [...new Set(questions.map((q) => q.examCode).filter(Boolean))],
     byKind: countBy(questions, (q) => q.kind),
     withAnswer: questions.filter((q) => q.answerKey).length,
     withFigures: questions.filter((q) => q.figureFiles.length > 0).length,

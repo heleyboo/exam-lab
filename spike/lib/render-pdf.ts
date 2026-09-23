@@ -56,9 +56,10 @@ export async function pageCount(pdfPath: string): Promise<number> {
  * Làm sạch ảnh scan trước khi gửi model: xám hoá, nắn nghiêng, cân bằng sáng, khử đốm.
  * `-deskew` nắn được ảnh scan lệch vài độ, lỗi phổ biến nhất của đề trường.
  */
-async function preprocessImage(input: string, output: string): Promise<void> {
+async function preprocessImage(input: string, output: string, rotate: number): Promise<void> {
   await run("magick", [
     input,
+    ...(rotate !== 0 ? ["-rotate", String(rotate)] : []),
     "-colorspace", "Gray",
     "-deskew", "40%",
     "+repage",
@@ -73,8 +74,17 @@ export interface RenderOptions {
   dpi: number;
   preprocess: PreprocessMode;
   scanned: boolean;
-  /** Giới hạn khoảng trang, ví dụ { first: 1, last: 5 } để chạy thử đề dày mà không tốn cả tập. */
-  range?: { first: number; last: number };
+  /**
+   * Giới hạn khoảng trang, ví dụ [{ first: 1, last: 4 }, { first: 17, last: 17 }].
+   * Nhiều khoảng để lấy được đề kèm trang đáp án ở cuối file mà không phải render cả tập.
+   */
+  ranges?: { first: number; last: number }[];
+  /**
+   * Xoay ảnh trước khi gửi model, theo độ.
+   * Trang bảng đáp án của đề thi thật hay in nằm ngang; model đọc chữ xoay 90°
+   * kém hơn hẳn so với đọc chữ dựng đứng.
+   */
+  rotate?: number;
 }
 
 /** Render từng trang PDF thành PNG, tiền xử lý khi cần. */
@@ -92,21 +102,29 @@ export async function renderPdfPages(
   await fs.mkdir(rawDir, { recursive: true });
   await fs.mkdir(readyDir, { recursive: true });
 
-  const rangeArgs = opts.range
-    ? ["-f", String(opts.range.first), "-l", String(opts.range.last)]
-    : [];
-  await run("pdftoppm", [
-    "-png",
-    "-r", String(opts.dpi),
-    ...rangeArgs,
-    pdfPath,
-    path.join(rawDir, "page"),
-  ]);
+  const ranges = opts.ranges ?? [];
+  if (ranges.length === 0) {
+    await run("pdftoppm", ["-png", "-r", String(opts.dpi), pdfPath, path.join(rawDir, "page")]);
+  } else {
+    for (const range of ranges) {
+      await run("pdftoppm", [
+        "-png",
+        "-r", String(opts.dpi),
+        "-f", String(range.first),
+        "-l", String(range.last),
+        pdfPath,
+        path.join(rawDir, "page"),
+      ]);
+    }
+  }
 
   const rendered = (await fs.readdir(rawDir)).filter((f) => f.endsWith(".png"));
   if (rendered.length === 0) throw new Error(`pdftoppm không tạo ra trang nào từ ${pdfPath}`);
 
-  const shouldPreprocess = opts.preprocess === "on" || (opts.preprocess === "auto" && opts.scanned);
+  const rotate = opts.rotate ?? 0;
+  // Có góc xoay thì bắt buộc phải qua bước xử lý ảnh, kể cả khi là PDF số.
+  const shouldPreprocess =
+    rotate !== 0 || opts.preprocess === "on" || (opts.preprocess === "auto" && opts.scanned);
 
   const pages: RenderedPage[] = [];
   for (const file of rendered) {
@@ -120,7 +138,7 @@ export async function renderPdfPages(
     let imagePath = rawImagePath;
     if (shouldPreprocess) {
       imagePath = path.join(readyDir, file);
-      await preprocessImage(rawImagePath, imagePath);
+      await preprocessImage(rawImagePath, imagePath, rotate);
     }
 
     pages.push({ page, imagePath, preprocessed: shouldPreprocess });

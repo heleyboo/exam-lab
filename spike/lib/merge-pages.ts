@@ -57,6 +57,7 @@ export function mergePages(pages: PageInput[]): MergeResult {
 
       questions.push({
         ...question,
+        examCode: extraction.examCode,
         page,
         spansPages: [page],
         figures: question.figures.map((figure) => ({ ...figure, page })),
@@ -109,8 +110,9 @@ function normalizePart(part: string, answer: string): string {
 
 /**
  * Gắn đáp án từ bảng đáp án cuối đề.
- * Khoá là (phần, số câu) chứ không phải số câu trần: "Câu 1" xuất hiện ở cả ba
- * phần, khoá theo số trần sẽ để đáp án Phần III ghi đè lên Phần I.
+ * Khoá là (mã đề, phần, số câu):
+ * - thiếu phần: "Câu 1" có ở cả ba phần, đáp án Phần III sẽ đè lên Phần I
+ * - thiếu mã đề: một trang đáp án liệt kê nhiều mã, mã sau sẽ đè lên mã trước
  */
 function applyAnswerTables(questions: MergedQuestion[], pages: PageInput[]): string[] {
   const warnings: string[] = [];
@@ -119,7 +121,7 @@ function applyAnswerTables(questions: MergedQuestion[], pages: PageInput[]): str
   for (const { page, extraction } of pages) {
     for (const row of extraction.answerKeyTable) {
       if (!row.number?.trim() || !row.answer?.trim()) continue;
-      const key = `${normalizePart(row.part ?? "", row.answer)}:${row.number.trim()}`;
+      const key = `${(row.examCode ?? "").trim()}|${normalizePart(row.part ?? "", row.answer)}|${row.number.trim()}`;
       const existing = table.get(key);
       if (existing && existing !== row.answer.trim()) {
         warnings.push(
@@ -133,16 +135,59 @@ function applyAnswerTables(questions: MergedQuestion[], pages: PageInput[]): str
   }
   if (table.size === 0) return warnings;
 
+  const codesInTable = new Set([...table.keys()].map((key) => key.split("|")[0] ?? ""));
   const used = new Set<string>();
+
+  // Đề thi và bảng đáp án chính thức đánh số KHÁC NHAU: đề đánh lại từ 1 ở mỗi
+  // phần ("Phần III, câu 1 đến câu 6"), còn bảng đáp án đánh liên tục 1..22.
+  // Nên ngoài số câu theo phần, phải thử cả số thứ tự liên tục toàn đề.
+  const sequentialNumber = buildSequentialNumbers(questions);
+
   for (const question of questions) {
     if (question.answerKey || !question.number.trim()) continue;
-    const key = `${PART_OF_KIND[question.kind]}:${question.number.trim()}`;
-    const answer = table.get(key);
-    if (answer) {
+    const part = PART_OF_KIND[question.kind];
+    const sequential = sequentialNumber.get(question);
+
+    const candidates = [
+      `${question.examCode.trim()}|${part}|${question.number.trim()}`,
+      ...(sequential !== undefined
+        ? [
+            `${question.examCode.trim()}|${part}|${sequential}`,
+            // Bảng chỉ ghi số liên tục, không ghi phần: thử mọi phần với số đó.
+            ...["I", "II", "III", "TL"].map((p) => `${question.examCode.trim()}|${p}|${sequential}`),
+          ]
+        : []),
+    ];
+
+    // Bảng chỉ có một mã đề thì chấp nhận cả dòng ghi mã khác hoặc không ghi mã.
+    if (codesInTable.size === 1) {
+      const only = [...codesInTable][0] ?? "";
+      candidates.push(
+        `${only}|${part}|${question.number.trim()}`,
+        ...(sequential !== undefined
+          ? ["I", "II", "III", "TL"].map((p) => `${only}|${p}|${sequential}`)
+          : []),
+      );
+    }
+
+    const key = candidates.find((candidate) => table.get(candidate));
+    const answer = key ? table.get(key) : undefined;
+    if (key && answer) {
       question.answerKey = answer;
       question.answerSource = "answer_table";
       used.add(key);
     }
+  }
+
+  const questionCodes = new Set(questions.map((q) => q.examCode.trim()).filter(Boolean));
+  const unmatchedCodes = [...codesInTable].filter(
+    (code) => code && questionCodes.size > 0 && !questionCodes.has(code),
+  );
+  if (unmatchedCodes.length > 0) {
+    warnings.push(
+      `Bảng đáp án có mã đề không xuất hiện trong lần chạy: ${unmatchedCodes.join(", ")} ` +
+        `(câu hỏi thuộc mã ${[...questionCodes].join(", ") || "không rõ"})`,
+    );
   }
 
   const unmatched = [...table.keys()].filter((key) => !used.has(key) && table.get(key));
@@ -152,6 +197,27 @@ function applyAnswerTables(questions: MergedQuestion[], pages: PageInput[]): str
     );
   }
   return warnings;
+}
+
+/**
+ * Số thứ tự liên tục của từng câu trong một mã đề, theo thứ tự Phần I → II → III → tự luận.
+ * Dùng để khớp với bảng đáp án chính thức, vốn đánh số liên tục cả đề.
+ */
+function buildSequentialNumbers(questions: MergedQuestion[]): Map<MergedQuestion, string> {
+  const order: QuestionKind[] = ["mcq", "true_false", "short_answer", "essay"];
+  const result = new Map<MergedQuestion, string>();
+
+  for (const code of new Set(questions.map((q) => q.examCode))) {
+    const ofCode = questions.filter((q) => q.examCode === code);
+    let index = 0;
+    for (const kind of order) {
+      for (const question of ofCode.filter((q) => q.kind === kind)) {
+        index += 1;
+        result.set(question, String(index));
+      }
+    }
+  }
+  return result;
 }
 
 /** Kiểm tra các bất biến của format THPT 2025 - tín hiệu rẻ về chất lượng model. */
@@ -184,10 +250,12 @@ function checkFormat(questions: MergedQuestion[]): string[] {
     }
 
     if (question.number.trim()) {
-      const key = `${PART_OF_KIND[question.kind]}:${question.number.trim()}`;
+      const key = `${question.examCode.trim()}|${PART_OF_KIND[question.kind]}|${question.number.trim()}`;
       const previousIndex = seen.get(key);
       if (previousIndex !== undefined) {
-        warnings.push(`${at}: trùng số câu với câu thứ ${previousIndex + 1} trong cùng phần`);
+        warnings.push(
+          `${at}: trùng số câu với câu thứ ${previousIndex + 1} trong cùng phần và cùng mã đề`,
+        );
       }
       seen.set(key, index);
     }

@@ -55,9 +55,18 @@ export type FigureRect = z.infer<typeof FigureRect>;
 export const PageExtraction = z.object({
   /** true khi trang chỉ có bìa, hướng dẫn, hoặc bảng đáp án. */
   isNonQuestionPage: z.boolean(),
-  /** Bảng đáp án in trên trang này. `part` để phân biệt Phần I/II/III vì đề THPT 2025 đánh số lại từ 1 ở mỗi phần. */
+  /**
+   * Mã đề in trên trang, ví dụ "0101". Rỗng nếu đề không có mã.
+   * Một kỳ thi phát nhiều mã đề khác nhau, mỗi mã có đáp án riêng cho cùng số câu.
+   */
+  examCode: z.string(),
+  /**
+   * Bảng đáp án in trên trang này.
+   * `part` phân biệt Phần I/II/III vì đề THPT 2025 đánh số lại từ 1 ở mỗi phần;
+   * `examCode` phân biệt các mã đề vì một trang đáp án thường liệt kê nhiều mã.
+   */
   answerKeyTable: z.array(
-    z.object({ part: z.string(), number: z.string(), answer: z.string() }),
+    z.object({ examCode: z.string(), part: z.string(), number: z.string(), answer: z.string() }),
   ),
   questions: z.array(ExtractedQuestion),
 });
@@ -69,6 +78,8 @@ export type MergedFigure = z.infer<typeof MergedFigure>;
 
 /** Câu hỏi sau khi ghép trang và gắn đáp án, ghi ra questions.json. */
 export const MergedQuestion = ExtractedQuestion.omit({ figures: true }).extend({
+  /** Mã đề chứa câu này, lấy từ trang. Rỗng nếu đề không có mã. */
+  examCode: z.string(),
   /** Trang chứa phần đầu của câu, đánh số từ 1. */
   page: z.number().int().positive(),
   spansPages: z.array(z.number().int().positive()),
@@ -95,6 +106,8 @@ export const RunMeta = z.object({
   /** null với docx: không có khái niệm trang nên không đo được chi phí mỗi trang. */
   pages: z.number().nullable(),
   questionCount: z.number(),
+  /** Các mã đề gặp trong lần chạy. Nhiều hơn một nghĩa là lần chạy gộp nhiều mã đề. */
+  examCodes: z.array(z.string()),
   byKind: z.record(z.string(), z.number()),
   withAnswer: z.number(),
   withFigures: z.number(),

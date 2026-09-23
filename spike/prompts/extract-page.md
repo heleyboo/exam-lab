@@ -26,11 +26,13 @@ Nếu trang không ghi rõ tên phần, hãy suy ra loại câu từ hình thứ
    - `true_false`: chuỗi 4 ký tự `D` hoặc `S` theo thứ tự a, b, c, d, ví dụ `DDSD`.
    - `short_answer`: đáp số, ví dụ `2,5`.
    - Không có đáp án trên trang thì để chuỗi rỗng. **Tuyệt đối không tự giải để đoán đáp án.**
-7. **Bảng đáp án**: nếu trang là bảng đáp án tổng hợp (dạng lưới số câu kèm đáp án), điền vào `answerKeyTable`, đặt `isNonQuestionPage: true` và để `questions` rỗng.
+7. **Mã đề**: đọc mã đề in trên trang (thường ở góc phải đầu trang hoặc chân trang, ví dụ "Mã đề: 0101") và điền vào `examCode`. Không có thì để chuỗi rỗng.
+8. **Bảng đáp án**: nếu trang là bảng đáp án tổng hợp (dạng lưới số câu kèm đáp án), điền vào `answerKeyTable`, đặt `isNonQuestionPage: true` và để `questions` rỗng.
    - Mỗi dòng phải ghi `part` là phần chứa câu đó: `"I"`, `"II"`, `"III"`, hoặc `"TL"` cho tự luận. Đề THPT 2025 **đánh số lại từ 1 ở mỗi phần**, nên thiếu `part` thì không biết "Câu 1" là câu nào.
+   - Mỗi dòng phải ghi `examCode` của mã đề chứa câu đó. **Một trang đáp án thường liệt kê nhiều mã đề cạnh nhau**, mỗi mã một cột hoặc một bảng riêng; thiếu `examCode` thì đáp án của mã này sẽ bị gán nhầm cho mã khác.
    - Nếu bảng không ghi rõ phần, suy ra từ dạng đáp án: một chữ cái A–D là Phần I, chuỗi 4 ký tự Đ/S là Phần II, một đáp số là Phần III.
-8. **Lời giải**: chỉ điền `solution` khi đề in sẵn lời giải hoặc hướng dẫn chấm. Không tự viết lời giải.
-9. **Trang bìa, trang hướng dẫn, trang trắng**: đặt `isNonQuestionPage: true` và `questions` rỗng.
-10. Các trường mảng không có dữ liệu thì trả về mảng rỗng, các trường chuỗi không có dữ liệu thì trả về chuỗi rỗng. Không bỏ trường nào.
+9. **Lời giải**: chỉ điền `solution` khi đề in sẵn lời giải hoặc hướng dẫn chấm. Không tự viết lời giải.
+10. **Trang bìa, trang hướng dẫn, trang trắng**: đặt `isNonQuestionPage: true` và `questions` rỗng.
+11. Các trường mảng không có dữ liệu thì trả về mảng rỗng, các trường chuỗi không có dữ liệu thì trả về chuỗi rỗng. Không bỏ trường nào.
 
 Chỉ trả về dữ liệu đọc được từ trang. Không bổ sung, không suy diễn, không tóm tắt.
