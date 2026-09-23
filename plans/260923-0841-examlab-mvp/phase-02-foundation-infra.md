@@ -1,9 +1,10 @@
 ---
 phase: 2
-title: "Nền tảng và hạ tầng"
-status: pending
+title: Nền tảng và hạ tầng
+status: completed
 priority: P1
-dependencies: [1]
+dependencies:
+  - 1
 ---
 
 # Phase 2: Nền tảng và hạ tầng

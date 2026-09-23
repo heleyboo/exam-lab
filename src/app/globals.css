@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+/* Token lấy đúng từ prototype Claude Design. Bộ màu đầy đủ và các component
+   dựng ở Phase 4; đây chỉ là nền tối thiểu để Phase 2 có gì đó nhìn được. */
+@theme inline {
+  --color-bg: #fbf5ef;
+  --color-surface: #ffffff;
+  --color-surface-2: #f8f0e8;
+  --color-ink: #12283d;
+  --color-ink-2: #4a5a6e;
+  --color-ink-3: #8a94a2;
+  --color-line: #ebe0d5;
+  --color-accent: #1b5a8c;
+  --color-ok: #1b7550;
+  --color-bad: #c6453f;
+  --color-warn: #9a6408;
+  --color-ai: #66399b;
+  --font-sans: var(--font-be-vietnam-pro);
+  --font-display: var(--font-montserrat);
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}

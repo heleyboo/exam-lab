@@ -19,6 +19,19 @@ Bốn loại câu theo cấu trúc đề thi tốt nghiệp THPT 2025:
 
 ## Đang có gì
 
+`src/` — khung ứng dụng web: Next.js 16 (App Router), PostgreSQL với pgvector qua Drizzle, hàng đợi pg-boss chạy ngay trên Postgres, đăng nhập Better Auth với bốn vai trò, lưu file qua giao thức S3.
+
+```bash
+pnpm install
+cp .env.example .env          # điền BETTER_AUTH_SECRET
+pnpm infra:up                 # Postgres + MinIO bằng Docker
+pnpm db:migrate
+pnpm dev                      # http://localhost:3000
+pnpm dev:worker               # worker chạy process riêng
+```
+
+Chưa có màn hình nghiệp vụ nào — giao diện dựng ở giai đoạn sau theo prototype trong `design/`.
+
 `spike/` — công cụ đo chất lượng trích xuất. Xem [spike/README.md](spike/README.md) để biết cách chạy.
 
 ```bash

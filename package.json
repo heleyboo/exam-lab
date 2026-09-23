@@ -7,21 +7,48 @@
     "node": ">=22"
   },
   "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "dev:worker": "tsx watch src/worker/index.ts",
+    "worker": "tsx src/worker/index.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "auth:schema": "better-auth generate --config src/server/auth/index.ts --output src/server/db/schema/auth.ts",
+    "infra:up": "docker compose -f docker/compose.yml up -d",
+    "infra:down": "docker compose -f docker/compose.yml down",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
     "spike:outline": "tsx spike/outline.ts",
     "spike:extract": "tsx spike/run-extract.ts",
     "spike:label": "tsx spike/score.ts label",
-    "spike:score": "tsx spike/score.ts score",
-    "typecheck": "tsc --noEmit"
+    "spike:score": "tsx spike/score.ts score"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.127.0",
+    "@aws-sdk/client-s3": "^3.1137.0",
+    "@aws-sdk/s3-request-presigner": "^3.1137.0",
+    "better-auth": "^1.7.5",
     "dotenv": "^17.2.3",
+    "drizzle-orm": "^0.45.3",
+    "next": "^16.3.5",
+    "pg": "^8.23.0",
+    "pg-boss": "^12.33.4",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
     "sharp": "^0.34.4",
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^24.10.1",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "drizzle-kit": "^0.31.11",
+    "tailwindcss": "^4.3.3",
     "tsx": "^4.20.6",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.1"
   }
 }
