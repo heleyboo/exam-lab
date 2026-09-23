@@ -58,8 +58,6 @@ GoogleService-Info.plist
 
 repomix-output.xml
 .serena/cache
-plans/**/*
-!plans/templates/*
 screenshots/*
 docs/screenshots/*
 logs.txt
@@ -107,3 +105,6 @@ worktrees/
 
 # file kê khai của bộ ClaudeKit, không liên quan dự án
 release-manifest.json
+
+# bộ nhớ nội bộ của agent nằm lẫn trong thư mục plan
+**/.claude/agent-memory/
