@@ -1,0 +1,26 @@
+{
+  "name": "exam-lab",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "spike:extract": "tsx spike/run-extract.ts",
+    "spike:label": "tsx spike/score.ts label",
+    "spike:score": "tsx spike/score.ts score",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.127.0",
+    "dotenv": "^17.2.3",
+    "sharp": "^0.34.4",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}
