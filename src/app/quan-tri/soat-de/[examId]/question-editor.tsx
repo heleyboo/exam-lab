@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { Badge } from "@/components/ui/badge";
 import { QUESTION_KIND_LABEL } from "@/lib/tone";
 import { saveQuestion, submitReview, markDuplicate } from "./actions";
@@ -47,7 +47,20 @@ export function QuestionEditor({
   const [stem, setStem] = useState(question.stem);
   const [answerKey, setAnswerKey] = useState(question.answerKey);
   const [edited, setEdited] = useState(false);
+  const [pending, startTransition] = useTransition();
   const openedAt = useRef(Date.now());
+
+  /**
+   * Đo thời gian soát ngay lúc gửi, không đặt sẵn vào ô ẩn.
+   * Tính Date.now() trong lúc render thì máy chủ và trình duyệt ra hai giá trị
+   * khác nhau, React báo lệch hydration.
+   */
+  function sendReview(formData: FormData) {
+    formData.set("durationMs", String(Date.now() - openedAt.current));
+    startTransition(async () => {
+      await submitReview(formData);
+    });
+  }
 
   useEffect(() => {
     openedAt.current = Date.now();
@@ -59,7 +72,11 @@ export function QuestionEditor({
     <article
       id={`cau-${question.id}`}
       onFocusCapture={() => onFocus(question.id)}
-      className="scroll-mt-4 rounded-[13px] border border-[var(--color-line)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow)]"
+      className={`scroll-mt-4 rounded-[13px] border bg-[var(--color-surface)] p-4 shadow-[var(--shadow)] transition-opacity ${
+        question.reviewed
+          ? "border-[var(--color-ok)] opacity-60"
+          : "border-[var(--color-line)]"
+      }`}
     >
       <div className="flex flex-wrap items-center gap-2">
         <span className="font-mono text-xs text-[var(--color-ink-3)]">{question.shortCode}</span>
@@ -180,9 +197,8 @@ export function QuestionEditor({
         </div>
       </form>
 
-      <form action={submitReview} className="mt-4 space-y-2 border-t border-[var(--color-line)] pt-3">
+      <form action={sendReview} className="mt-4 space-y-2 border-t border-[var(--color-line)] pt-3">
         <input type="hidden" name="questionId" value={question.id} />
-        <input type="hidden" name="durationMs" value={Date.now() - openedAt.current} />
 
         {edited && (
           <fieldset>
@@ -199,22 +215,29 @@ export function QuestionEditor({
         )}
 
         <div className="flex flex-wrap gap-2">
+          {/* Khoá nút trong lúc gửi: không có phản hồi thì người soát bấm lại,
+              và lần soát thứ hai ghi thời gian 1ms làm hỏng số liệu tốc độ. */}
           <button
             type="submit"
             name="outcome"
             value={edited ? "approved_edited" : "approved_clean"}
-            className="rounded-lg bg-[var(--color-ok)] px-3 py-2 text-sm font-medium text-white"
+            disabled={pending}
+            className="rounded-lg bg-[var(--color-ok)] px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
           >
-            {edited ? "Sửa rồi duyệt" : "Duyệt thẳng"}
+            {pending ? "Đang lưu..." : edited ? "Sửa rồi duyệt" : "Duyệt thẳng"}
           </button>
           <button
             type="submit"
             name="outcome"
             value="rejected"
-            className="rounded-lg border border-[var(--color-bad)] px-3 py-2 text-sm text-[var(--color-bad)]"
+            disabled={pending}
+            className="rounded-lg border border-[var(--color-bad)] px-3 py-2 text-sm text-[var(--color-bad)] disabled:opacity-50"
           >
             Từ chối
           </button>
+          {question.reviewed && (
+            <span className="self-center text-sm text-[var(--color-ok)]">Đã soát xong</span>
+          )}
         </div>
       </form>
     </article>

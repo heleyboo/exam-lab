@@ -26,7 +26,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi" className={`${beVietnamPro.variable} ${montserrat.variable}`}>
-      <body>{children}</body>
+      {/* Tiện ích trình duyệt hay chèn thuộc tính vào body trước khi React
+          kịp chạy, gây cảnh báo lệch hydration không liên quan tới mã nguồn. */}
+      <body suppressHydrationWarning>{children}</body>
     </html>
   );
 }

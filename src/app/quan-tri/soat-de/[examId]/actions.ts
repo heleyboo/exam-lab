@@ -48,7 +48,10 @@ export async function saveQuestion(formData: FormData): Promise<void> {
     }
   }
 
-  revalidatePath("/quan-tri/soat-de", "layout");
+  // Phải truyền đúng mẫu route động. Truyền "/quan-tri/soat-de" thì không khớp
+  // trang nào nên màn hình không bao giờ được làm mới, và người soát tưởng nút
+  // hỏng rồi bấm lại.
+  revalidatePath("/quan-tri/soat-de/[examId]", "page");
 }
 
 export async function submitReview(formData: FormData): Promise<void> {
@@ -71,7 +74,10 @@ export async function submitReview(formData: FormData): Promise<void> {
     durationMs: Number.isFinite(duration) && duration > 0 ? duration : undefined,
   });
 
-  revalidatePath("/quan-tri/soat-de", "layout");
+  // Phải truyền đúng mẫu route động. Truyền "/quan-tri/soat-de" thì không khớp
+  // trang nào nên màn hình không bao giờ được làm mới, và người soát tưởng nút
+  // hỏng rồi bấm lại.
+  revalidatePath("/quan-tri/soat-de/[examId]", "page");
 }
 
 export async function markDuplicate(formData: FormData): Promise<void> {
@@ -85,5 +91,8 @@ export async function markDuplicate(formData: FormData): Promise<void> {
     ...(isDuplicate && ofQuestionId ? { ofQuestionId } : {}),
   });
 
-  revalidatePath("/quan-tri/soat-de", "layout");
+  // Phải truyền đúng mẫu route động. Truyền "/quan-tri/soat-de" thì không khớp
+  // trang nào nên màn hình không bao giờ được làm mới, và người soát tưởng nút
+  // hỏng rồi bấm lại.
+  revalidatePath("/quan-tri/soat-de/[examId]", "page");
 }
